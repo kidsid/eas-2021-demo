@@ -1,0 +1,14 @@
+{
+  "targets": {
+    "eas-2021-demo-7041d": {
+      "hosting": {
+        "app": [
+          "eas-2021-demo-7041d"
+        ]
+      }
+    }
+  },
+  "projects": {
+    "default": "eas-2021-demo-7041d"
+  }
+}

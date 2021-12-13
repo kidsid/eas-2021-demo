@@ -32,3 +32,8 @@ npm-debug.log*
 /www
 
 .vercel
+
+# Firebase
+.firebase
+*-debug.log
+.runtimeconfig.json

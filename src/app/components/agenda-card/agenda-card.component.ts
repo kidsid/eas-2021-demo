@@ -3,7 +3,9 @@ import { Router } from '@angular/router';
 import { AgendaService } from '../../services/agenda.service';
 import { SpeakerService } from '../../services/speaker.service';
 import { CompanyService } from '../../services/company.service';
-import { AgendaItem, Speaker } from '../../types';
+import { AgendaItem, AgendaItemFire, Speaker, SpeakerFire } from '../../types';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'app-agenda-card',
@@ -13,9 +15,11 @@ import { AgendaItem, Speaker } from '../../types';
 export class AgendaCardComponent implements OnInit {
   @Input() id: number;
 
-  public agenda: AgendaItem;
-  public speakers: Speaker[];
+  public agenda: AgendaItemFire;
+  public speakers: SpeakerFire[];
   public photoUrls: string[] = [];
+
+  private unsubscribe$: Subject<null> = new Subject();
 
   constructor(
     private agendaService: AgendaService,
@@ -25,9 +29,18 @@ export class AgendaCardComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.agenda = this.agendaService.getAgendaItem(this.id);
-    this.speakers = this.speakerService.getSpeakers(this.agenda.speakerIds);
-    this.photoUrls = this.speakers.map(speaker => speaker.photoUrl);
+    this.agendaService.getAgendaByIdFromFirebase(this.id)
+    .pipe(takeUntil(this.unsubscribe$))
+    .subscribe((agenda: AgendaItemFire) => {
+      this.agenda = agenda;
+      if(this.agenda) {
+        this.speakerService.getSpeakersByIdsFromFireBase(this.agenda.speakers)
+        .pipe(takeUntil(this.unsubscribe$))
+        .subscribe((speakers: Array<SpeakerFire>) => {
+          this.speakers = speakers;
+        })
+      }
+    })
   }
 
   navigateToAgendaItemPage() {
@@ -40,5 +53,12 @@ export class AgendaCardComponent implements OnInit {
 
   formatTalkTime(agendaItem: AgendaItem) {
     return this.agendaService.formatTalkTime(agendaItem);
+  }
+
+  ngOnDestroy(): void {
+    //Called once, before the instance is destroyed.
+    //Add 'implements OnDestroy' to the class.
+    this.unsubscribe$.next();
+    this.unsubscribe$.complete();
   }
 }

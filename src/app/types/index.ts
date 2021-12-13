@@ -25,6 +25,29 @@ export interface AgendaItem {
   endTime: string;
 }
 
+export interface AgendaItemFire {
+  id: string;
+  title: string;
+  startTime: string;
+  endTime: string;
+  description: string;
+  videoLink: string;
+  speakers: Array<number>;
+}
+
+export interface SpeakerFire {
+  id: string;
+  firstName: string;
+  lastName: string;
+  company: string;
+  description: string;
+  email: string;
+  photo: string;
+  position: string;
+  linkedin?: string;
+  twitter?: string;
+}
+
 export interface Speaker {
   id: number;
   firstName: string;

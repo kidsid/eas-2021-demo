@@ -8,29 +8,41 @@
   <app-speaker-card [safeArea]="true" [id]="id"></app-speaker-card>
 
   <div class="ion-padding">
-    <h2 class="eas-header-large">About {{ speaker.firstName }}</h2>
-    <ion-text>{{ speaker.biography }}</ion-text><br /><br />
+    <h2 class="eas-header-large">About {{ speaker?.firstName }}</h2>
+    <ion-text>{{ speaker?.description }}</ion-text><br /><br />
 
-    <h2 class="eas-header-large">Connect with {{ speaker.firstName }}</h2>
-    <ion-button color="light" class="connect-button" (click)="openLink(speaker.linkedin)" *ngIf="speaker.linkedin">
+    <h2 class="eas-header-large">Connect with {{ speaker?.firstName }}</h2>
+    <ion-button color="light" class="connect-button" (click)="openLink(speaker.linkedin)" *ngIf="speaker?.linkedin">
       <div>
         <ion-icon name="logo-linkedin"></ion-icon><br />
         <ion-label>LinkedIn</ion-label>
       </div>
     </ion-button>
 
-    <ion-button color="light" class="connect-button" (click)="openLink(speaker.github)" *ngIf="speaker.github">
+    <ion-button color="light" class="connect-button" (click)="openLink(speaker.github)" *ngIf="speaker?.github">
       <div>
         <ion-icon name="logo-github"></ion-icon><br />
         <ion-label>GitHub</ion-label>
       </div>
     </ion-button>
 
-    <ion-button color="light" class="connect-button" (click)="openLink(speaker.twitter)" *ngIf="speaker.twitter">
+    <ion-button color="light" class="connect-button" (click)="openLink(speaker.twitter)" *ngIf="speaker?.twitter">
       <div>
         <ion-icon name="logo-twitter" size="large"></ion-icon><br />
         <ion-label>Twitter</ion-label>
       </div>
     </ion-button>
   </div>
+  <div>
+    <ion-title size="large">Agenda</ion-title>
+    <div *ngFor="let item of sessions">
+      <ion-card (click)="navigateToAgendaItemPage(item.id)"
+              [button]="true" >
+        <div>
+          <ion-label>{{item.title}}</ion-label>
+        </div>
+      </ion-card>
+    </div>
+  </div>
+  
 </ion-content>

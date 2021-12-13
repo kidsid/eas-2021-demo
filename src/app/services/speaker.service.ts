@@ -1,10 +1,17 @@
 import { Injectable } from '@angular/core';
-import { Speaker } from '../types';
+import { Speaker, SpeakerFire } from '../types';
+import { forkJoin, merge, Observable, zip } from 'rxjs';
+import { map, filter, switchMap, tap, mergeMap, first, toArray, flatMap } from 'rxjs/operators';
+import * as firebase from 'firebase/app';
+import { AngularFirestore, AngularFirestoreCollection, AngularFirestoreDocument } from '@angular/fire/compat/firestore';
 
 @Injectable({
   providedIn: 'root'
 })
 export class SpeakerService {
+
+  private speakersCollection: AngularFirestoreCollection<SpeakerFire>;
+
   private speakers: Speaker[] = [
     {
       id: 1,
@@ -310,7 +317,11 @@ Liam is a software engineer based in Boston, USA. Currently he serves as the tea
     },
   ];
 
-  constructor() {}
+  constructor(
+    private afs: AngularFirestore
+  ) {
+    this.speakersCollection = this.afs.collection<SpeakerFire>('speakers');
+  }
 
   getSpeakers(ids?: number[]): Speaker[] {
     if (ids === undefined) { return this.speakers; }
@@ -320,5 +331,42 @@ Liam is a software engineer based in Boston, USA. Currently he serves as the tea
 
   getSpeaker(id: number): Speaker | undefined {
     return this.speakers.find(speaker => speaker.id === id);
+  }
+
+  // services for firebase
+
+  getSpeakersFromFirestore(): Observable<any> {
+    return this.speakersCollection.snapshotChanges()
+      .pipe(
+        map(actions => {
+          return actions.map(a => {
+            const data = a.payload.doc.data() as SpeakerFire;
+            const id = a.payload.doc.id;
+            return { id, ...data };
+          });
+        })
+      )
+  }
+
+  getSpeakerFromFireStore(id: number): Observable<any> {
+    let speakersDocument = this.afs.doc<SpeakerFire>('speakers/' + id);
+    return speakersDocument.snapshotChanges()
+      .pipe(
+        mergeMap(changes => {
+          const data = changes.payload.data();
+          const id = changes.payload.id;
+          return [{ id, ...data }];
+        })
+      )
+  }
+
+  getSpeakersByIdsFromFireBase(ids: Array<number>): Observable<any> {
+    const observables = ids.map(id=> {
+      return this.afs.collection('speakers').doc(id.toString()).get().pipe(
+        map(snapshot => snapshot.data())
+      ) 
+    })
+
+    return forkJoin(observables);
   }
 }

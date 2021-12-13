@@ -1,10 +1,16 @@
 import { Injectable } from '@angular/core';
-import { AgendaItem } from '../types';
+import { AgendaItem, AgendaItemFire } from '../types';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { AngularFirestore, AngularFirestoreCollection, AngularFirestoreDocument } from '@angular/fire/compat/firestore';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AgendaService {
+
+  private agendaCollection: AngularFirestoreCollection<AgendaItemFire>;
+
   private agenda: AgendaItem[] = [
     {
       id: 1,
@@ -120,7 +126,11 @@ export class AgendaService {
     },
   ];
 
-  constructor() {}
+  constructor(
+    private afs: AngularFirestore
+  ) {
+    this.agendaCollection = this.afs.collection<AgendaItemFire>('sessions');
+  }
 
   getAgenda(): AgendaItem[] {
     return this.agenda;
@@ -147,5 +157,36 @@ export class AgendaService {
     }
 
     return hour + time.slice(2);
+  }
+
+  // services for firebase
+
+  getAgendaFromFirebase(): Observable<any> {
+    return this.agendaCollection.snapshotChanges()
+      .pipe(
+        map(actions => {
+          return actions.map(a => {
+            const data = a.payload.doc.data() as AgendaItemFire;
+            const id = a.payload.doc.id;
+            return { id, ...data };
+          })
+        })
+      )
+  }
+
+  getAgendaByIdFromFirebase(id: number): Observable<any> {
+    let agendaDocument = this.afs.doc<AgendaItemFire>('sessions/' + id);
+    return agendaDocument.snapshotChanges()
+      .pipe(
+        map(changes => {
+          const data = changes.payload.data();
+          const id = changes.payload.id;
+          return { id, ...data };
+        })
+      )
+  }
+
+  getAgendaBySpeakerId(id: string): Observable<any> {
+    return this.afs.collection('sessions', ref => ref.where('speakers', 'array-contains', Number(id))).valueChanges()
   }
 }

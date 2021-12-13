@@ -1,28 +1,36 @@
-import { Component } from '@angular/core';
-import { AgendaItem } from '../../types';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { AgendaItem, AgendaItemFire } from '../../types';
 import { AgendaService } from '../../services/agenda.service';
 import { ModalController } from '@ionic/angular';
 import { PermissionsModalComponent } from 'src/app/components/permissions-modal/permissions-modal.component';
 import { Capacitor } from '@capacitor/core';
 import { PushNotificationService } from 'src/app/services/push-notification.service';
 import { StorageService } from 'src/app/services/storage.service';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'app-tab1',
   templateUrl: 'tab1.page.html',
   styleUrls: ['tab1.page.scss']
 })
-export class Tab1Page {
-  public agenda: AgendaItem[] = [];
+export class Tab1Page implements OnInit, OnDestroy {
+  public agenda: AgendaItemFire[];
+
+  private unsubscribe$: Subject<null> = new Subject();
 
   constructor(private agendaService: AgendaService,
     private modalController: ModalController,
     private pushNotificationService: PushNotificationService,
     private storageService: StorageService) {
-    this.agenda = this.agendaService.getAgenda();
   }
 
   ngOnInit() {
+    this.agendaService.getAgendaFromFirebase()
+    .pipe(takeUntil(this.unsubscribe$))
+    .subscribe((agenda: Array<AgendaItemFire>) => {
+      this.agenda = agenda;
+    });
     this.presentModal();
   }
 
@@ -53,5 +61,10 @@ export class Tab1Page {
         return await modal.present();
       }
     }
+  }
+
+  ngOnDestroy(): void {
+      this.unsubscribe$.next();
+      this.unsubscribe$.complete();
   }
 }
